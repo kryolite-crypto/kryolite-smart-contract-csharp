@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishTrimmed>true</PublishTrimmed>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseAppHost>false</UseAppHost>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
+    <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Kryolite.SmartContract\Kryolite.SmartContract.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Kryolite.SmartContract\Kryolite.SmartContract.csproj" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler.LLVM" Version="8.0.0-preview.7.23503.1" />
+    <PackageReference Include="runtime.win-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="8.0.0-preview.7.23503.1" />
+    <PackageReference Include="SimpleBase" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <ProjectReference Include="..\..\Kryolite.SmartContract.Generators\Kryolite.SmartContract.Generators.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <WasmImport Include="env!__exit"/>
+    <WasmImport Include="env!__rand"/>
+    <WasmImport Include="env!__transfer"/>
+    <WasmImport Include="env!__transfer_token"/>
+    <WasmImport Include="env!__consume_token"/>
+    <WasmImport Include="env!__approval"/>
+    <WasmImport Include="env!__println"/>
+    <WasmImport Include="env!__append_event"/>
+    <WasmImport Include="env!__publish_event"/>
+    <WasmImport Include="env!__return"/>
+    <WasmImport Include="env!__hash_data"/>
+  </ItemGroup>
+
+  <!-- For simplicity, publish on build -->
+  <Target Name="RunAotBuild" AfterTargets="Build" DependsOnTargets="Publish" />
+
+</Project>

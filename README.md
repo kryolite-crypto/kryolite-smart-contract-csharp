@@ -1,1 +1,0 @@
-# kryolite-smart-contract-csharp
