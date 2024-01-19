@@ -1,10 +1,9 @@
-﻿using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Text;
 using Kryolite.SmartContract;
 
 namespace SaturdayNightLotto;
 
-[SmartContract(Name = "Saturday Night Lotto", ApiLevel = ApiLevel.V1)]
+[SmartContract(Name = "Saturday Night Lotto", Url = "https://kryolite-crypto.github.io/kryolottery", ApiLevel = ApiLevel.V1)]
 public class SaturdayNightLotto : IKryoliteStandardToken
 {
     public static State State { get; }
@@ -23,7 +22,8 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         KryoliteStandardToken.Register(instance);
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "buy_ticket")]
+    [Method]
+    [Description("Buy Ticket")]
     public static void BuyTicket()
     {
         Assert.True(State.RegistrationOpen);
@@ -58,7 +58,8 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         KRC721Event.Transfer(Contract.Address, Transaction.From, ticket.TokenId);
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "draw_winner")]
+    [Method]
+    [Description("Draw Winner")]
     public static void DrawWinner()
     {
         Assert.True(Transaction.From == Contract.Owner);
@@ -106,22 +107,25 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         State.DigitsToAddresses.Clear();
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "open_registration")]
+    [Method]
+    [Description("Open Registration")]
     public static void OpenRegistration()
     {
         Assert.True(Transaction.From == Contract.Owner);
         State.RegistrationOpen = true;
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "close_registration")]
+    [Method]
+    [Description("Close Registration")]
     public static void CloseRegistration()
     {
         Assert.True(Transaction.From == Contract.Owner);
         State.RegistrationOpen = false;
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "set_ticket_price")]
-    public static void SetTicketPrice(ulong newPrice)
+    [Method]
+    [Description("Set ticket price")]
+    public static void SetTicketPrice([Description("New price")] ulong newPrice)
     {
         Assert.True(Transaction.From == Contract.Owner);
         Assert.True(State.Tickets.Count == 0);
@@ -130,16 +134,19 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         State.TicketPrice = newPrice;
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "tickets_sold")]
-    public static void TicketsSold()
+    [Method]
+    [Description("Tickets sold")]
+    public static string TicketsSold()
     {
         Program.Return(State.Tickets.Count.ToString());
+        return State.Tickets.Count.ToString();
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "get_state")]
-    public static void GetState()
+    [Method]
+    [Description("Get state")]
+    public static string GetState()
     {
-        Program.Return(State.ToJson());
+        return State.ToJson();
     }
 
     private static Ticket PrintTicket()
