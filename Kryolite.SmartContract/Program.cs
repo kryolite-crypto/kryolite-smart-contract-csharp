@@ -28,6 +28,32 @@ public static class Program
         }
     }
 
+    public static unsafe void Return(ReadOnlySpan<byte> bytes)
+    {
+        fixed (byte* ptr = bytes)
+        {
+            API.__return(ptr, bytes.Length);
+        }
+    }
+
+    public static unsafe void Return(Address addr)
+    {
+        var bytes = addr.Buffer;
+        fixed (byte* ptr = bytes)
+        {
+            API.__return(ptr, bytes.Length);
+        }
+    }
+
+    public static unsafe void Return(U256 u256)
+    {
+        var bytes = u256.Buffer;
+        fixed (byte* ptr = bytes)
+        {
+            API.__return(ptr, bytes.Length);
+        }
+    }
+
     public static void Exit(int exitCode)
     {
         API.__exit(exitCode);
