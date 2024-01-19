@@ -24,7 +24,7 @@ public class KingOfKryolite
 
         // Claim throne by buying it from current king
         king.Address.Transfer(Transaction.Value);
-        king.Profit = Transaction.Value - State.ClaimAmount;
+        king.Profit = Transaction.Value - king.ClaimAmount;
 
         var newKing = new King
         {
