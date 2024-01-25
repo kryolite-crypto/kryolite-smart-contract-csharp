@@ -71,11 +71,58 @@ public class ExportsGenerator : ISourceGenerator
             using System.Threading.Tasks;
             using System.Runtime.InteropServices;
             using Kryolite.SmartContract;
+            using System.Text;
 
             namespace {classSymbol.ContainingNamespace.ToDisplayString()};
             
             public static class Exports
             {{
+                [UnmanagedCallersOnly(EntryPoint = ""__malloc"")]
+                public static unsafe byte* __malloc(int len)
+                {{
+                    return (byte*)Marshal.AllocHGlobal(len);
+                }}
+
+                [UnmanagedCallersOnly(EntryPoint = ""__free"")]
+                public static unsafe void __free(byte* ptr, int len)
+                {{
+                    Marshal.FreeHGlobal((nint)ptr);
+                }}
+
+                [UnmanagedCallersOnly(EntryPoint = ""set_transaction"")]
+                public static unsafe void SetTransaction(byte* fromPtr, int fromLen, ulong value)
+                {{
+                    Transaction.Value = value;
+                    Transaction.From = new Address(fromPtr, fromLen);
+                }}
+
+                [UnmanagedCallersOnly(EntryPoint = ""set_view"")]
+                public static unsafe void SetView(ulong height, long timestamp)
+                {{
+                    View.Height = height;
+                    View.Timestamp = timestamp;
+                }}
+
+                [UnmanagedCallersOnly(EntryPoint = ""set_contract"")]
+                public static unsafe void SetContract(byte* addrPtr, int addrLen, byte* ownerPtr, int ownerLen, ulong balance)
+                {{
+                    Contract.Address = new Address(addrPtr, addrLen);
+                    Contract.Owner = new Address(ownerPtr, ownerLen);
+                    Contract.Balance = balance;
+                }}
+
+                [UnmanagedCallersOnly(EntryPoint = ""get_token"")]
+                public unsafe static void GetToken(byte* tokenPtr, int len)
+                {{
+                    if (KryoliteStandardToken.Instance is null)
+                    {{
+                        Program.Exit(313);
+                        return;
+                    }}
+
+                    var token = KryoliteStandardToken.Instance.GetToken(new U256(tokenPtr, len));
+                    Program.Return(token.ToJson());
+                }}
             ");
 
         foreach (var method in methods)
@@ -84,7 +131,9 @@ public class ExportsGenerator : ISourceGenerator
             {
                 Name = method.Name,
                 Description = method.GetAttributes().Where(x => x.AttributeClass?.Name == "Description").First()
-                    .ConstructorArguments.First().Value?.ToString()
+                    .ConstructorArguments.First().Value?.ToString(),
+                IsReadOnly = (bool)(method.GetAttributes().Where(x => x.AttributeClass?.Name == "Method").First()
+                    .NamedArguments.Where(x => x.Key == "ReadOnly").Select(x => x.Value.Value).FirstOrDefault() ?? false)
             };
 
             Manifest.Methods.Add(methodManifest);
@@ -101,7 +150,7 @@ public class ExportsGenerator : ISourceGenerator
                 {
                     Name = parameter.Name,
                     Type = parameter.Type.Name,
-                    Description = method.GetAttributes().Where(x => x.AttributeClass?.Name == "Description").First()
+                    Description = parameter.GetAttributes().Where(x => x.AttributeClass?.Name == "Description").First()
                         .ConstructorArguments.First().Value?.ToString()
                 };
 
@@ -178,7 +227,7 @@ public class ExportsGenerator : ISourceGenerator
         [UnmanagedCallersOnly(EntryPoint = ""GetManifest"")]
         public static void GetManifest()
         {{
-            return @""{JsonSerializer.Serialize(Manifest)}"";
+            Program.ReturnUTF8Bytes([{string.Join(",", JsonSerializer.SerializeToUtf8Bytes(Manifest))}]);
         }}
         ");
 
@@ -235,6 +284,8 @@ public class ContractMethod
     public string Name { get; set; } = string.Empty;
     [JsonPropertyName("description")]
     public string? Description { get; set; }
+    [JsonPropertyName("readonly")]
+    public bool IsReadOnly { get; set; }
     [JsonPropertyName("method_params")]
     public List<ContractParam> Params { get; set; } = [];
 }

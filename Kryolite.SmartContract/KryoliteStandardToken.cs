@@ -5,24 +5,11 @@ namespace Kryolite.SmartContract;
 
 public static class KryoliteStandardToken
 {
-    private static IKryoliteStandardToken? Instance;
+    public static IKryoliteStandardToken? Instance { get; private set; }
 
     public static void Register(IKryoliteStandardToken instance)
     {
         Instance = instance;
-    }
-
-    [UnmanagedCallersOnly(EntryPoint = "get_token")]
-    public unsafe static void GetToken(byte* tokenPtr, int len)
-    {
-        if (Instance is null)
-        {
-            Program.Exit(313);
-            return;
-        }
-
-        var token = Instance.GetToken(new U256(tokenPtr, len));
-        Program.Return(token.ToJson());
     }
 }
 

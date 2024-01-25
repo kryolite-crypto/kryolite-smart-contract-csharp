@@ -20,6 +20,8 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         var instance = new SaturdayNightLotto();
 
         KryoliteStandardToken.Register(instance);
+
+        ScheduleNextDraw();
     }
 
     [Method]
@@ -63,12 +65,17 @@ public class SaturdayNightLotto : IKryoliteStandardToken
     public static void DrawWinner()
     {
         Assert.True(Transaction.From == Contract.Owner);
-        Assert.True(State.Tickets.Count > 0);
 
-        State.PreviousWinners.Clear();
+        if (State.Tickets.Count == 0)
+        {
+            // Nothing to do, schedule next draw and exit
+            ScheduleNextDraw();
+            return;
+        }
 
         var digits = string.Join(string.Empty, RollDigits());
 
+        State.PreviousWinners.Clear();
         State.PreviousDigits = digits;
         
         if(!State.DigitsToAddresses.TryGetValue(digits, out var winners))
@@ -105,6 +112,9 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         State.TicketToAddress.Clear();
         State.AddressToTickets.Clear();
         State.DigitsToAddresses.Clear();
+
+        // Schedule next draw
+        ScheduleNextDraw();
     }
 
     [Method]
@@ -134,19 +144,27 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         State.TicketPrice = newPrice;
     }
 
-    [Method]
+    [Method(ReadOnly = true)]
     [Description("Tickets sold")]
     public static string TicketsSold()
     {
-        Program.Return(State.Tickets.Count.ToString());
         return State.Tickets.Count.ToString();
     }
 
-    [Method]
+    [Method(ReadOnly = true)]
     [Description("Get state")]
     public static string GetState()
     {
         return State.ToJson();
+    }
+
+    private static void ScheduleNextDraw()
+    {
+        // Schedule next draw
+        Contract.Scheduler(DrawWinner)
+            .DayOfWeek(DayOfWeek.Saturday)
+            .At(20, 00)
+            .Save();
     }
 
     private static Ticket PrintTicket()

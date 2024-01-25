@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Kryolite.SmartContract
 {
-    public class API
+    public static class API
     {
         [WasmImportLinkage]
         [DllImport("env", EntryPoint = "__exit")]
@@ -48,17 +48,13 @@ namespace Kryolite.SmartContract
         [DllImport("env", EntryPoint = "__hash_data")]
         public static unsafe extern void __hash_data(byte* buf, int size, byte* dest, int dest_len);
 
-        [UnmanagedCallersOnly(EntryPoint = "__malloc")]
-        public static unsafe byte* __malloc(int len)
-        {
-            return (byte*)Marshal.AllocHGlobal(len);
-        }
+        [WasmImportLinkage]
+        [DllImport("env", EntryPoint = "__schedule_param")]
+        public static unsafe extern void __schedule_param(byte* buf, int len);
 
-        [UnmanagedCallersOnly(EntryPoint = "__free")]
-        public static unsafe void __malloc(byte* ptr, int len)
-        {
-            Marshal.FreeHGlobal((nint)ptr);
-        }
+        [WasmImportLinkage]
+        [DllImport("env", EntryPoint = "__schedule")]
+        public static unsafe extern void __schedule(byte* buf, int len, long timestamp);
     }
 }
 

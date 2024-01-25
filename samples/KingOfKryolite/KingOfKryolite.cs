@@ -4,7 +4,7 @@ using Kryolite.SmartContract;
 
 namespace KingOfKryolite;
 
-[SmartContract(Name = "King of Kryolite", Url = "", ApiLevel = ApiLevel.V1)]
+[SmartContract(Name = "King of Kryolite", Url = "https://kryolite-crypto.github.io/kingofkryolite", ApiLevel = ApiLevel.V1)]
 public class KingOfKryolite
 {
     public static State State { get; }
@@ -18,13 +18,18 @@ public class KingOfKryolite
     [Description("Claim Throne")]
     public static void ClaimThrone([Description("Name for your king")] string name)
     {
-        Assert.True(Transaction.Value == State.ClaimAmount);
+        Assert.True(Transaction.Value >= State.ClaimAmount);
 
-        var king = State.CurrentKing;
+        if (State.Kings.Count > 0)
+        {
+            var king = State.CurrentKing;
 
-        // Claim throne by buying it from current king
-        king.Address.Transfer(Transaction.Value);
-        king.Profit = Transaction.Value - king.ClaimAmount;
+            // Claim throne by buying it from current king
+            king.Address.Transfer(Transaction.Value);
+            king.Profit = Transaction.Value - king.ClaimAmount;
+
+            Event.Broadcast(CustomEvents.OldKing, king.Name);
+        }
 
         var newKing = new King
         {
@@ -37,14 +42,16 @@ public class KingOfKryolite
         State.Kings.Add(newKing);
 
         // Increase ClaimAmount
-        State.ClaimAmount = (ulong)(State.ClaimAmount * 0.25d);
+        State.ClaimAmount = (ulong)(Transaction.Value * 1.25d);
 
-        Event.Broadcast(CustomEvents.NewKing, king.Name, name, State.ClaimAmount);
+        Event.Broadcast(CustomEvents.NewKing, name, Transaction.Value, State.ClaimAmount);
     }
 
-    public static unsafe void Test(byte* ptr, int len)
+    [Method(ReadOnly = true)]
+    [Description("Get State")]
+    public static string GetState()
     {
-        var span = new Span<byte>(ptr, len).ToArray();
+        return State.ToJson();
     }
 }
 
@@ -89,7 +96,7 @@ public class King
     public Address Address { get; set; } = Address.NULL_ADDRESS;
     public ulong ClaimAmount { get; set; }
     public ulong Profit { get; set; }
-    public ulong Timestamp { get; set; }
+    public long Timestamp { get; set; }
 
     public string ToJson()
     {
@@ -101,7 +108,7 @@ public class King
         sb.AppendLine(",");
         sb.AppendFormat("\"claimAmount\": {0}", ClaimAmount.ToString());
         sb.AppendLine(",");
-        sb.AppendFormat("\"profit\": {0}", ClaimAmount.ToString());
+        sb.AppendFormat("\"profit\": {0}", Profit.ToString());
         sb.AppendLine(",");
         sb.AppendFormat("\"timestamp\": {0}", Timestamp.ToString());
         sb.AppendLine("}");
@@ -111,5 +118,6 @@ public class King
 
 public enum CustomEvents
 {
-    NewKing
+    NewKing,
+    OldKing
 }

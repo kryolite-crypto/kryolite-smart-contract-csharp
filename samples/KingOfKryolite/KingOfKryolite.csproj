@@ -13,6 +13,16 @@
     <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <NativeDebugSymbols>false</NativeDebugSymbols>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!--IlcInvariantGlobalization>true</IlcInvariantGlobalization-->
+    <!--RootAllApplicationAssemblies>false</RootAllApplicationAssemblies-->
+    <!--IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+    <IlcDisableReflection>true</IlcDisableReflection-->
+    <!--IlcOptimizationPreference>Size</IlcOptimizationPreference-->
+    <!--IlcDisableUnhandledExceptionExperience>true</IlcDisableUnhandledExceptionExperience-->
+    <!--Optimize>true</Optimize-->
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,8 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.DotNet.ILCompiler.LLVM" Version="8.0.0-preview.7.23503.1" />
-    <PackageReference Include="runtime.win-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="8.0.0-preview.7.23503.1" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler.LLVM" Version="8.0.0-preview.*" />
+    <PackageReference Include="runtime.win-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="8.0.0-preview.*" />
     <PackageReference Include="SimpleBase" Version="4.0.0" />
   </ItemGroup>
 
@@ -38,6 +48,8 @@
     <WasmImport Include="env!__publish_event"/>
     <WasmImport Include="env!__return"/>
     <WasmImport Include="env!__hash_data"/>
+    <WasmImport Include="env!__schedule_param"/>
+    <WasmImport Include="env!__schedule"/>
   </ItemGroup>
 
   <!-- For simplicity, publish on build -->
