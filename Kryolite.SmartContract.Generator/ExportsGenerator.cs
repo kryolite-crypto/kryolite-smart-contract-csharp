@@ -24,6 +24,16 @@ public class ExportsGenerator : ISourceGenerator
             throw new Exception("[SmartContract] declaration not found");
         }
 
+        if (receiver.Install is null)
+        {
+            throw new Exception("[Install] declaration not found");
+        }
+
+        if (receiver.Uninstall is null)
+        {
+            throw new Exception("[Uninstall] declaration not found");
+        }
+
         var classModel = context.Compilation.GetSemanticModel(receiver.ContractDeclaration.SyntaxTree);
         var classSymbol = classModel.GetDeclaredSymbol(receiver.ContractDeclaration);
 
@@ -56,16 +66,29 @@ public class ExportsGenerator : ISourceGenerator
             }
         }
 
-        var source = GenerateExports(symbols.First().ContainingType, symbols);
+        var installModel = context.Compilation.GetSemanticModel(receiver.Install.SyntaxTree);
+        var installSymbol = (IMethodSymbol)installModel.GetDeclaredSymbol(receiver.Install)!;
+
+        var uninstallModel = context.Compilation.GetSemanticModel(receiver.Uninstall.SyntaxTree);
+        var uninstallSymbol = (IMethodSymbol)installModel.GetDeclaredSymbol(receiver.Uninstall)!;
+
+        var source = GenerateExports(context, symbols.First().ContainingType, symbols, installSymbol, uninstallSymbol);
         context.AddSource("ContractExports_g.cs", SourceText.From(source, Encoding.UTF8));
+
+        #pragma warning disable RS1035
+        if (context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir))
+        {
+            File.WriteAllText(Path.Combine(projectDir, "bin", "Release", "net8.0", "wasi-wasm", "publish", $"{classSymbol.Name.ToLower()}.json"), JsonSerializer.Serialize(Manifest));
+        }
+        #pragma warning restore RS1035
     }
 
     public void Initialize(GeneratorInitializationContext context)
     {
-            context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
+        context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
     }
 
-    private string GenerateExports(INamedTypeSymbol classSymbol, List<IMethodSymbol> methods)
+    private string GenerateExports(GeneratorExecutionContext context, INamedTypeSymbol classSymbol, List<IMethodSymbol> methods, IMethodSymbol installSymbol, IMethodSymbol uninstallSymbol)
     {
         var source = new StringBuilder($@"
             using System.Threading.Tasks;
@@ -77,6 +100,8 @@ public class ExportsGenerator : ISourceGenerator
             
             public static class Exports
             {{
+                private static readonly {classSymbol.Name} Instance = new();
+
                 [UnmanagedCallersOnly(EntryPoint = ""__malloc"")]
                 public static unsafe byte* __malloc(int len)
                 {{
@@ -89,39 +114,38 @@ public class ExportsGenerator : ISourceGenerator
                     Marshal.FreeHGlobal((nint)ptr);
                 }}
 
+                [UnmanagedCallersOnly(EntryPoint = ""__install"")]
+                public static unsafe void __install()
+                {{
+                    Instance.{installSymbol.Name}();
+                }}
+
+                [UnmanagedCallersOnly(EntryPoint = ""__uninstall"")]
+                public static unsafe void __uninstall()
+                {{
+                    Instance.{uninstallSymbol.Name}();
+                }}
+
                 [UnmanagedCallersOnly(EntryPoint = ""set_transaction"")]
-                public static unsafe void SetTransaction(byte* fromPtr, int fromLen, ulong value)
+                public static unsafe void SetTransaction(byte* fromPtr, int fromLen, long value)
                 {{
                     Transaction.Value = value;
                     Transaction.From = new Address(fromPtr, fromLen);
                 }}
 
                 [UnmanagedCallersOnly(EntryPoint = ""set_view"")]
-                public static unsafe void SetView(ulong height, long timestamp)
+                public static unsafe void SetView(long height, long timestamp)
                 {{
                     View.Height = height;
                     View.Timestamp = timestamp;
                 }}
 
                 [UnmanagedCallersOnly(EntryPoint = ""set_contract"")]
-                public static unsafe void SetContract(byte* addrPtr, int addrLen, byte* ownerPtr, int ownerLen, ulong balance)
+                public static unsafe void SetContract(byte* addrPtr, int addrLen, byte* ownerPtr, int ownerLen, long balance)
                 {{
                     Contract.Address = new Address(addrPtr, addrLen);
                     Contract.Owner = new Address(ownerPtr, ownerLen);
                     Contract.Balance = balance;
-                }}
-
-                [UnmanagedCallersOnly(EntryPoint = ""get_token"")]
-                public unsafe static void GetToken(byte* tokenPtr, int len)
-                {{
-                    if (KryoliteStandardToken.Instance is null)
-                    {{
-                        Program.Exit(313);
-                        return;
-                    }}
-
-                    var token = KryoliteStandardToken.Instance.GetToken(new U256(tokenPtr, len));
-                    Program.Return(token.ToJson());
                 }}
             ");
 
@@ -130,10 +154,14 @@ public class ExportsGenerator : ISourceGenerator
             var methodManifest = new ContractMethod
             {
                 Name = method.Name,
-                Description = method.GetAttributes().Where(x => x.AttributeClass?.Name == "Description").First()
-                    .ConstructorArguments.First().Value?.ToString(),
-                IsReadOnly = (bool)(method.GetAttributes().Where(x => x.AttributeClass?.Name == "Method").First()
-                    .NamedArguments.Where(x => x.Key == "ReadOnly").Select(x => x.Value.Value).FirstOrDefault() ?? false)
+                Description = method.GetAttributes()
+                    .DefaultIfEmpty()
+                    .Where(x => x?.AttributeClass?.Name == "Description")
+                    .FirstOrDefault()?.ConstructorArguments.FirstOrDefault().Value?.ToString(),
+                IsReadOnly = (bool)(method.GetAttributes()
+                    .DefaultIfEmpty()
+                    .Where(x => x?.AttributeClass?.Name == "Method")
+                    .FirstOrDefault()?.NamedArguments.Where(x => x.Key == "ReadOnly").Select(x => x.Value.Value).FirstOrDefault() ?? false)
             };
 
             Manifest.Methods.Add(methodManifest);
@@ -149,43 +177,50 @@ public class ExportsGenerator : ISourceGenerator
                 var parameterManifest = new ContractParam
                 {
                     Name = parameter.Name,
-                    Type = parameter.Type.Name,
-                    Description = parameter.GetAttributes().Where(x => x.AttributeClass?.Name == "Description").First()
-                        .ConstructorArguments.First().Value?.ToString()
+                    Type = parameter.Type.ToDisplayString().Split(".").Last(),
+                    Description = parameter.GetAttributes()
+                        .DefaultIfEmpty()
+                        .Where(x => x?.AttributeClass?.Name == "Description")
+                        .FirstOrDefault()?.ConstructorArguments.FirstOrDefault().Value?.ToString()
                 };
 
                 methodManifest.Params.Add(parameterManifest);
 
-                switch (parameter.Type.Name)
+                switch (parameter.Type.ToDisplayString())
                 {
-                    case "String":
+                    case "string":
                         parameters.Add($"byte* __ptr_{num}");
                         parameters.Add($"int __len_{num}");
 
-                        statements.Add($"var span = new Span<byte>(__ptr_{num}, __len_{num});");
-                        statements.Add($"var __val_{num} = Encoding.UTF8.GetString(span);");
+                        statements.Add($"var span_{num} = new Span<byte>(__ptr_{num}, __len_{num});");
+                        statements.Add($"var __val_{num} = Encoding.UTF8.GetString(span_{num});");
                         break;
                     case "byte[]":
-                    case "ReadOnlySpan<byte>":
                         parameters.Add($"byte* __ptr_{num}");
                         parameters.Add($"int __len_{num}");
 
                         statements.Add($"var __val_{num} = new Span<byte>(__ptr_{num}, __len_{num}).ToArray();");
                         break;
-                    case "Address":
+                    case "System.ReadOnlySpan<byte>":
                         parameters.Add($"byte* __ptr_{num}");
-                        parameters.Add($"int __len");
+                        parameters.Add($"int __len_{num}");
 
-                        statements.Add($"var __val_{num} = new Address(__ptr_{num}, __len_{num})");
+                        statements.Add($"var __val_{num} = new Span<byte>(__ptr_{num}, __len_{num});");
                         break;
-                    case "U256":
+                    case "Kryolite.SmartContract.Address":
                         parameters.Add($"byte* __ptr_{num}");
-                        parameters.Add($"int __len");
+                        parameters.Add($"int __len_{num}");
 
-                        statements.Add($"var __val_{num} = new U256(__ptr_{num}, __len_{num})");
+                        statements.Add($"var __val_{num} = new Address(__ptr_{num}, __len_{num});");
+                        break;
+                    case "Kryolite.SmartContract.U256":
+                        parameters.Add($"byte* __ptr_{num}");
+                        parameters.Add($"int __len_{num}");
+
+                        statements.Add($"var __val_{num} = new U256(__ptr_{num}, __len_{num});");
                         break;
                     default:
-                        parameters.Add($"{parameter.Type.Name} __val_{num}");
+                        parameters.Add($"{parameter.Type.ToDisplayString()} __val_{num}");
                         break;
                 }
 
@@ -193,19 +228,15 @@ public class ExportsGenerator : ISourceGenerator
                 num++;
             }
 
-            var methodCall = $"{classSymbol.Name}.{method.Name}({string.Join(", ", toPass)})";
+            var methodCall = $"Instance.{method.Name}({string.Join(", ", toPass)})";
 
-            switch (method.ReturnType.Name)
+            switch (method.ReturnType.ToDisplayString())
             {
-                case "String":
-                case "byte[]":
-                case "ReadOnlySpan<byte>":
-                case "Address":
-                case "U256":
-                    statements.Add($"Program.Return({methodCall});");
+                case "void":
+                    statements.Add($"{methodCall};");
                     break;
                 default:
-                    statements.Add($"{methodCall};");
+                    statements.Add($"Program.Return({methodCall});");
                     break;
             }
 
@@ -223,14 +254,6 @@ public class ExportsGenerator : ISourceGenerator
             source.AppendLine("}");
         }
 
-        source.Append($@"
-        [UnmanagedCallersOnly(EntryPoint = ""GetManifest"")]
-        public static void GetManifest()
-        {{
-            Program.ReturnUTF8Bytes([{string.Join(",", JsonSerializer.SerializeToUtf8Bytes(Manifest))}]);
-        }}
-        ");
-
         source.AppendLine("}");
         return source.ToString();
     }
@@ -240,6 +263,8 @@ class SyntaxReceiver : ISyntaxReceiver
 {
     public ClassDeclarationSyntax? ContractDeclaration;
     public List<MethodDeclarationSyntax> Methods { get; } = [];
+    public MethodDeclarationSyntax? Install;
+    public MethodDeclarationSyntax? Uninstall;
 
     public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
     {
@@ -253,9 +278,30 @@ class SyntaxReceiver : ISyntaxReceiver
             ContractDeclaration = cSyntax;
         }
 
-        if (syntaxNode is MethodDeclarationSyntax syntax && IsExportedMethod(syntax))
+        if (syntaxNode is MethodDeclarationSyntax syntax)
         {
-            Methods.Add(syntax);
+            if (IsExportedMethod(syntax))
+            {
+                Methods.Add(syntax);
+            }
+            else if (IsInstall(syntax))
+            {
+                if (Install is not null)
+                {
+                    throw new Exception("Multiple [Install] declarations found");
+                }
+
+                Install = syntax;
+            }
+            else if (IsUninstall(syntax))
+            {
+                if (Uninstall is not null)
+                {
+                    throw new Exception("Multiple [Uninstall] declarations found");
+                }
+
+                Uninstall = syntax;
+            }
         }
     }
 
@@ -264,6 +310,12 @@ class SyntaxReceiver : ISyntaxReceiver
 
     public static bool IsExportedMethod(MethodDeclarationSyntax syntax)
         => syntax.AttributeLists.Count > 0 && syntax.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "Method"));
+
+    public static bool IsInstall(MethodDeclarationSyntax syntax)
+        => syntax.AttributeLists.Count > 0 && syntax.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "Install"));
+
+    public static bool IsUninstall(MethodDeclarationSyntax syntax)
+        => syntax.AttributeLists.Count > 0 && syntax.AttributeLists.Any(x => x.Attributes.Any(y => y.Name.ToString() == "Uninstall"));
 }
 
 public class ContractManifest

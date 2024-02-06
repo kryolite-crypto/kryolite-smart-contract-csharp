@@ -38,7 +38,7 @@ COPY . C:\\build
 
 # Build sample project once, this will download additional tooling
 WORKDIR C:\\build
-RUN dotnet build samples\SaturdayNightLotto
+RUN dotnet build samples\TestContract
 # & dir C:\build\samples\SaturdayNightLotto\obj\Debug\net8.0\wasi-wasm & type C:\build\samples\SaturdayNightLotto\obj\Debug\net8.0\wasi-wasm\generated\Kryolite.SmartContract.Generator\Kryolite.SmartContract.Generator.ExportsGenerator\ContractExports_g.cs
 
 CMD [ "cmd", "/C", "ping -t localhost" ]

@@ -67,7 +67,7 @@ public static class KRC721
 
 public interface IKRC721
 {
-    public abstract ulong BalanceOf(Address owner);
+    public abstract long BalanceOf(Address owner);
     public abstract Address OwnerOf(U256 tokenId);
     public abstract void Approve(Address to, U256 tokenId);
     public abstract Address GetApproved(U256 tokenId);

@@ -7,14 +7,14 @@ public static class Contract
 {
     public static Address Address { get; set; } = Address.NULL_ADDRESS;
     public static Address Owner { get; set; } = Address.NULL_ADDRESS;
-    public static ulong Balance { get; set; }
+    public static long Balance { get; set; }
 
-    public static SchedulePlanner Scheduler(Action method)
+    public static SchedulePlanner Scheduler(Delegate method)
     {
         return new SchedulePlanner(method.Method.Name);
     }
 
-    public static SchedulePlanner Scheduler(Action method, params object[] methodParams)
+    public static SchedulePlanner Scheduler(Delegate method, params object[] methodParams)
     {
         return new SchedulePlanner(method.Method.Name, methodParams);
     }
@@ -39,7 +39,7 @@ public class SchedulePlanner
 
     public SchedulePlanner DayOfWeek(DayOfWeek dayOfWeek)
     {
-        ScheduledTime = ScheduledTime.AddDays(-(int)ScheduledTime.DayOfWeek + (int)dayOfWeek);
+        ScheduledTime = ScheduledTime.AddDays(((int)dayOfWeek - (int)ScheduledTime.DayOfWeek + 7) % 7);
         return this;
     }
 

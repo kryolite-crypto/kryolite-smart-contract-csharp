@@ -13,14 +13,15 @@
     <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-    <NativeDebugSymbols>false</NativeDebugSymbols>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <!--NativeDebugSymbols>false</NativeDebugSymbols>
     <OptimizationPreference>Size</OptimizationPreference>
     <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
     <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
     <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
     <IlcDisableReflection>true</IlcDisableReflection>
     <IlcDisableUnhandledExceptionExperience>true</IlcDisableUnhandledExceptionExperience>
-    <Optimize>true</Optimize>
+    <Optimize>true</Optimize-->
   </PropertyGroup>
 
   <ItemGroup>

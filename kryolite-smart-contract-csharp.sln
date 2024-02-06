@@ -11,8 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{3730
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SaturdayNightLotto", "samples\SaturdayNightLotto\SaturdayNightLotto.csproj", "{C8F3958D-C58E-47DF-831D-DAC151271D46}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KingOfKryolite.tests", "samples\KingOfKryolite.tests\KingOfKryolite.tests.csproj", "{B6E057C7-497E-4DD8-A4BB-62C489550EE9}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kryolite.SmartContract.Generator", "Kryolite.SmartContract.Generator\Kryolite.SmartContract.Generator.csproj", "{228AE284-1108-4B13-8110-F048FC1899EB}"
 EndProject
 Global

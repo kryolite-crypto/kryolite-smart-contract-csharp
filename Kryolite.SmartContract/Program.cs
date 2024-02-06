@@ -100,6 +100,11 @@ public static class Program
         Return(b.ToString());
     }
 
+    public static void Return(StandardToken token)
+    {
+      Return(token.ToJson());
+    }
+
     public static void Exit(int exitCode)
     {
         API.__exit(exitCode);

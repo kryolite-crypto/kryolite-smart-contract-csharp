@@ -14,7 +14,7 @@ namespace Kryolite.SmartContract
 
         [WasmImportLinkage]
         [DllImport("env", EntryPoint = "__transfer")]
-        public static unsafe extern void __transfer(byte* addrPtr, ulong value);
+        public static unsafe extern void __transfer(byte* addrPtr, long value);
 
         [WasmImportLinkage]
         [DllImport("env", EntryPoint = "__transfer_token")]

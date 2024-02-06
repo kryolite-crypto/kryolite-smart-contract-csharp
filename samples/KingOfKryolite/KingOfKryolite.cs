@@ -7,16 +7,23 @@ namespace KingOfKryolite;
 [SmartContract(Name = "King of Kryolite", Url = "https://kryolite-crypto.github.io/kingofkryolite", ApiLevel = ApiLevel.V1)]
 public class KingOfKryolite
 {
-    public static State State { get; }
+    private readonly State State = new();
 
-    static KingOfKryolite()
+    [Install]
+    public void InstallContract()
     {
-        State = new State();
+        State.ClaimAmount = 100_000000;
+    }
+
+    [Uninstall]
+    public void UninstallContract()
+    {
+
     }
 
     [Method]
     [Description("Claim Throne")]
-    public static void ClaimThrone([Description("Name for your king")] string name)
+    public void ClaimThrone([Description("Name for your king")] string name)
     {
         Assert.True(Transaction.Value >= State.ClaimAmount);
 
@@ -42,14 +49,14 @@ public class KingOfKryolite
         State.Kings.Add(newKing);
 
         // Increase ClaimAmount
-        State.ClaimAmount = (ulong)(Transaction.Value * 1.25d);
+        State.ClaimAmount = (long)(Transaction.Value * 1.25d);
 
         Event.Broadcast(CustomEvents.NewKing, name, Transaction.Value, State.ClaimAmount);
     }
 
     [Method(ReadOnly = true)]
     [Description("Get State")]
-    public static string GetState()
+    public string GetState()
     {
         return State.ToJson();
     }
@@ -57,7 +64,7 @@ public class KingOfKryolite
 
 public class State
 {
-    public ulong ClaimAmount = 100_000000;
+    public long ClaimAmount;
     public List<King> Kings = new();
     public King CurrentKing => Kings[Kings.Count - 1];
 
@@ -94,8 +101,8 @@ public class King
 {
     public string Name { get; set; } = string.Empty;
     public Address Address { get; set; } = Address.NULL_ADDRESS;
-    public ulong ClaimAmount { get; set; }
-    public ulong Profit { get; set; }
+    public long ClaimAmount { get; set; }
+    public long Profit { get; set; }
     public long Timestamp { get; set; }
 
     public string ToJson()

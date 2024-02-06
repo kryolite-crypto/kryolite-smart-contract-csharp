@@ -1,17 +1,6 @@
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Kryolite.SmartContract;
-
-public static class KryoliteStandardToken
-{
-    public static IKryoliteStandardToken? Instance { get; private set; }
-
-    public static void Register(IKryoliteStandardToken instance)
-    {
-        Instance = instance;
-    }
-}
 
 public interface IKryoliteStandardToken
 {

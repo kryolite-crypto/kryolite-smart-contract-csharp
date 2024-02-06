@@ -4,9 +4,9 @@ namespace Kryolite.SmartContract;
 
 public static class Event
 {
-    public static unsafe void Broadcast<T>(T ev, params object[] values)
+    public static unsafe void Broadcast(Enum ev, params object[] values)
     {
-        var bytes = Encoding.UTF8.GetBytes(nameof(ev));
+        var bytes = Encoding.UTF8.GetBytes(ev.ToString());
 
         fixed (byte* ptr = bytes)
         {

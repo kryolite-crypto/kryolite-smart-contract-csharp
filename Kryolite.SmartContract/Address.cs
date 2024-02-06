@@ -6,16 +6,16 @@ public class Address
 
     public Address(byte[] buffer)
     {
-        Assert.True(buffer.Length == 26);
+        Assert.True(buffer.Length == ADDRESS_SZ);
 
         Buffer = buffer;
     }
 
     public unsafe Address(byte* ptr, int len)
     {
-        Assert.True(len == 26);
+        Assert.True(len == ADDRESS_SZ);
 
-        Buffer = new byte[26];
+        Buffer = new byte[ADDRESS_SZ];
         
         for (var i = 0; i < Buffer.Length; i++)
         {
@@ -23,7 +23,7 @@ public class Address
         }
     }
 
-    public unsafe void Transfer(ulong value)
+    public unsafe void Transfer(long value)
     {
         fixed (byte* ptr = Buffer)
         {
@@ -66,5 +66,6 @@ public class Address
         return hash;
     }
 
-    public static Address NULL_ADDRESS { get; } = new Address(new byte[26]);
+    public static Address NULL_ADDRESS { get; } = new Address(new byte[ADDRESS_SZ]);
+    public const int ADDRESS_SZ = 25;
 }

@@ -6,9 +6,10 @@ namespace SaturdayNightLotto;
 [SmartContract(Name = "Saturday Night Lotto", Url = "https://kryolite-crypto.github.io/kryolottery", ApiLevel = ApiLevel.V1)]
 public class SaturdayNightLotto : IKryoliteStandardToken
 {
-    public static State State { get; }
+    public State State { get; private set; } = new();
 
-    static SaturdayNightLotto()
+    [Install]
+    public void InstallLotto()
     {
         State = new State
         {
@@ -16,17 +17,18 @@ public class SaturdayNightLotto : IKryoliteStandardToken
             RegistrationOpen = true
         };
 
-        // We need to create instance for API registration
-        var instance = new SaturdayNightLotto();
-
-        KryoliteStandardToken.Register(instance);
-
         ScheduleNextDraw();
+    }
+
+    [Uninstall]
+    public void UninstallLotto()
+    {
+
     }
 
     [Method]
     [Description("Buy Ticket")]
-    public static void BuyTicket()
+    public void BuyTicket()
     {
         Assert.True(State.RegistrationOpen);
         Assert.True(State.TicketPrice == Transaction.Value);
@@ -62,7 +64,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
 
     [Method]
     [Description("Draw Winner")]
-    public static void DrawWinner()
+    public void DrawWinner()
     {
         Assert.True(Transaction.From == Contract.Owner);
 
@@ -85,7 +87,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         else
         {
             // Pay to winners
-            var price = Contract.Balance / (ulong)winners.Count;
+            var price = Contract.Balance / (long)winners.Count;
 
             foreach (var winner in winners)
             {
@@ -119,7 +121,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
 
     [Method]
     [Description("Open Registration")]
-    public static void OpenRegistration()
+    public void OpenRegistration()
     {
         Assert.True(Transaction.From == Contract.Owner);
         State.RegistrationOpen = true;
@@ -127,7 +129,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
 
     [Method]
     [Description("Close Registration")]
-    public static void CloseRegistration()
+    public void CloseRegistration()
     {
         Assert.True(Transaction.From == Contract.Owner);
         State.RegistrationOpen = false;
@@ -135,7 +137,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
 
     [Method]
     [Description("Set ticket price")]
-    public static void SetTicketPrice([Description("New price")] ulong newPrice)
+    public void SetTicketPrice([Description("New price")] long newPrice)
     {
         Assert.True(Transaction.From == Contract.Owner);
         Assert.True(State.Tickets.Count == 0);
@@ -146,19 +148,19 @@ public class SaturdayNightLotto : IKryoliteStandardToken
 
     [Method(ReadOnly = true)]
     [Description("Tickets sold")]
-    public static string TicketsSold()
+    public string TicketsSold()
     {
         return State.Tickets.Count.ToString();
     }
 
     [Method(ReadOnly = true)]
     [Description("Get state")]
-    public static string GetState()
+    public string GetState()
     {
         return State.ToJson();
     }
 
-    private static void ScheduleNextDraw()
+    private void ScheduleNextDraw()
     {
         // Schedule next draw
         Contract.Scheduler(DrawWinner)
@@ -167,7 +169,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
             .Save();
     }
 
-    private static Ticket PrintTicket()
+    private Ticket PrintTicket()
     {
         var digits = RollDigits();
         var name = $"Saturday Night Lotto Ticket #{++State.TicketsSold}";
@@ -182,7 +184,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         };
     }
 
-    private static byte[] RollDigits()
+    private byte[] RollDigits()
     {
         var digits = new byte[3];
 
@@ -194,6 +196,8 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         return digits;
     }
 
+    [Method]
+    [Description("Get token with tokenId")]
     public StandardToken GetToken(U256 tokenId)
     {
         if (!State.Tickets.TryGetValue(tokenId, out var token))
@@ -213,7 +217,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
 public class State
 {
     public int TicketsSold { get; set; }
-    public ulong TicketPrice { get; set; }
+    public long TicketPrice { get; set; }
     public bool RegistrationOpen { get; set; }
     public string PreviousDigits { get; set; } = string.Empty;
     public Dictionary<U256, Ticket> Tickets { get; } = [];
@@ -267,6 +271,21 @@ public class State
             }
         }
 
+        sb.AppendLine("],");
+        sb.AppendLine("\"winners\": [");
+
+        var lastWinner = PreviousWinners.LastOrDefault();
+
+        foreach (var entry in PreviousWinners)
+        {
+          sb.Append(entry.ToJson());
+
+          if (entry != lastWinner)
+          {
+            sb.AppendLine(",");
+          }
+        }
+
         sb.AppendLine("]}");
 
         return sb.ToString();
@@ -276,7 +295,7 @@ public class State
 public class Winner
 {
     public Address Address { get; set; } = Address.NULL_ADDRESS;
-    public ulong Reward { get; set; }
+    public long Reward { get; set; }
 
     public string ToJson()
     {
