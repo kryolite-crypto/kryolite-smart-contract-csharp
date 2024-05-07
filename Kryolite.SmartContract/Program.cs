@@ -13,7 +13,7 @@ public static class Program
         }
     }
 
-    public static float Rand()
+    public static int Rand()
     {
         return API.__rand();
     }

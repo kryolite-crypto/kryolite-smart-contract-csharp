@@ -10,7 +10,7 @@ namespace Kryolite.SmartContract
 
         [WasmImportLinkage]
         [DllImport("env", EntryPoint = "__rand")]
-        public static unsafe extern float __rand();
+        public static unsafe extern int __rand();
 
         [WasmImportLinkage]
         [DllImport("env", EntryPoint = "__transfer")]

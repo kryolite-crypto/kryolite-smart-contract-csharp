@@ -190,9 +190,10 @@ public class SaturdayNightLotto : IKryoliteStandardToken
 
         for (var i = 0; i < 3; i++)
         {
-            digits[i] = (byte)(8 * Program.Rand() + 1);
+            var digit = Program.Rand() % 9 + 1;
+            digits[i] = (byte)Math.Abs(digit);
         }
-        
+
         return digits;
     }
 
