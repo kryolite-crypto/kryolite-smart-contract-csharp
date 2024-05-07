@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kryolite.SmartContract.Manifest", "Kryolite.SmartContract.Manifest\Kryolite.SmartContract.Manifest.csproj", "{B9DF81CC-0EAE-4334-96FC-2DBEA3A914AB}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kryolite.SmartContract", "Kryolite.SmartContract\Kryolite.SmartContract.csproj", "{5627AA28-6C0D-4F4A-B671-22FFE04B56C1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{3730EF47-53F4-4EF3-9397-F105187333F9}"
@@ -19,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B9DF81CC-0EAE-4334-96FC-2DBEA3A914AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B9DF81CC-0EAE-4334-96FC-2DBEA3A914AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B9DF81CC-0EAE-4334-96FC-2DBEA3A914AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B9DF81CC-0EAE-4334-96FC-2DBEA3A914AB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5627AA28-6C0D-4F4A-B671-22FFE04B56C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5627AA28-6C0D-4F4A-B671-22FFE04B56C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5627AA28-6C0D-4F4A-B671-22FFE04B56C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -31,10 +25,6 @@ Global
 		{C8F3958D-C58E-47DF-831D-DAC151271D46}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8F3958D-C58E-47DF-831D-DAC151271D46}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8F3958D-C58E-47DF-831D-DAC151271D46}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B6E057C7-497E-4DD8-A4BB-62C489550EE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B6E057C7-497E-4DD8-A4BB-62C489550EE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B6E057C7-497E-4DD8-A4BB-62C489550EE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B6E057C7-497E-4DD8-A4BB-62C489550EE9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{228AE284-1108-4B13-8110-F048FC1899EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{228AE284-1108-4B13-8110-F048FC1899EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{228AE284-1108-4B13-8110-F048FC1899EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -45,7 +35,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C8F3958D-C58E-47DF-831D-DAC151271D46} = {3730EF47-53F4-4EF3-9397-F105187333F9}
-		{B6E057C7-497E-4DD8-A4BB-62C489550EE9} = {3730EF47-53F4-4EF3-9397-F105187333F9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B56C66F5-D311-42A1-BBA0-36669E5A453F}

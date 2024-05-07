@@ -13,7 +13,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
     {
         State = new State
         {
-            TicketPrice = 1_000_000_000, // 1000 kryo
+            TicketPrice = 100_000_000, // 100 kryo
             RegistrationOpen = true
         };
 
@@ -59,7 +59,7 @@ public class SaturdayNightLotto : IKryoliteStandardToken
 
         addresses.Add(Transaction.From);
 
-        KRC721Event.Transfer(Contract.Address, Transaction.From, ticket.TokenId);
+        KRC721Event.Transfer(Contract.Address, Transaction.From, ticket.TokenId, ticket.Name, ticket.Description);
     }
 
     [Method]
@@ -86,8 +86,8 @@ public class SaturdayNightLotto : IKryoliteStandardToken
         }
         else
         {
-            // Pay to winners
-            var price = Contract.Balance / (long)winners.Count;
+            // Pay to winners, 5 kryo is left for gas fees for scheduled draws
+            var price = (Contract.Balance - 5_000000) / (long)winners.Count;
 
             foreach (var winner in winners)
             {
@@ -238,7 +238,11 @@ public class State
         sb.AppendLine(",");
         sb.AppendFormat("\"ticketPrice\": {0}", TicketPrice.ToString());
         sb.AppendLine(",");
+        sb.AppendFormat("\"currentPot\": {0}", (Contract.Balance - 5_000000).ToString());
+        sb.AppendLine(",");
         sb.AppendFormat("\"registrationOpen\": {0}", RegistrationOpen ? "true" : "false");
+        sb.AppendLine(",");
+        sb.AppendFormat("\"previousDigits\": \"{0}\"", PreviousDigits);
         sb.AppendLine(",");
         sb.AppendLine("\"tickets\": [");
 
